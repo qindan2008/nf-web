@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}
+    {% endblock title %}</title>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.css">
+    <link href="https://getbootstrap.com/docs/4.3/examples/carousel/carousel.css" rel="stylesheet" type="text/css">
+    <link href="https://getbootstrap.com/docs/4.3/examples/dashboard/dashboard.css" rel="stylesheet" type="text/css">
+
+    {#    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">#}
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"
+            integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
+            crossorigin="anonymous"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+{#    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>#}
+{#    <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>#}
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+
+</head>
+<body>
+<div class="content">
+
+
+    <header>
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="/">Nextflow Web</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="/status/">My runs<span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/workflows/">All workflows</a>
+        </li>
+      </ul>
+
+    </div>
+  </nav>
+</header>
+
+    {% block content %}
+
+    {% endblock content %}
+</div>
+
+<footer class="container main-block">
+    <img src="{{ url_for('static', filename='sanger_logo.jpg') }}" style="width:20%">
+    <p>This site is hosted by the <a href="http://www.sanger.ac.uk/">Wellcome Sanger Institute</a><br><a
+            href="http://www.sanger.ac.uk/legal/">Terms &amp; Conditions</a> & <a
+            href="http://www.sanger.ac.uk/legal/cookiespolicy.html">Cookies policy</a></p>
+</footer>
+
+
+</body>
+</html>

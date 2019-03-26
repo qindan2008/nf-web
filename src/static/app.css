@@ -1,0 +1,45 @@
+/* so that h1 doesn't take the entire wrapping block */
+h1 {
+    display: inline-block
+}
+
+/* sticky footer settings */
+
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+}
+
+/* nf-web */
+
+nav{
+    margin-bottom: 10px;
+}
+
+body {
+    padding-top: 100px;
+  counter-reset: section;
+}
+
+.status-block{
+    margin-left: 10%;
+    margin-right: 10%;
+
+}
+
+tr.td::before {
+  counter-increment: section;                 /* Increment the value of section counter by 1 */
+  content: counter(section);                  /* Display the value of section counter */
+}

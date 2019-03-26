@@ -1,0 +1,28 @@
+
+CREATE TABLE statuses (
+	id SMALLSERIAL NOT NULL, 
+	name VARCHAR(16) NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (name)
+);
+
+CREATE TABLE comp_groups (
+	id SERIAL NOT NULL, 
+	external_id CHAR(36) NOT NULL, 
+	group_id CHAR(36) NOT NULL, 
+	component_id CHAR(36) NOT NULL, 
+	job_id CHAR(36), 
+	params JSONB, 
+	added_on TIMESTAMP WITHOUT TIME ZONE, 
+	last_checked TIMESTAMP WITHOUT TIME ZONE, 
+	completed_on TIMESTAMP WITHOUT TIME ZONE, 
+	status_id SMALLINT, 
+	PRIMARY KEY (id), 
+	UNIQUE (external_id), 
+	UNIQUE (job_id), 
+	FOREIGN KEY(status_id) REFERENCES statuses (id)
+);
+grant select, usage on all sequences in schema public to %cgpaaspgdbuser;
+grant select, insert, update, delete on table comp_groups to %cgpaaspgdbuser;
+grant select on table statuses to %cgpaaspgdbuser;
+insert into statuses values (0, 'registered'), (1, 'pending'), (2, 'running'), (3, 'completed'), (4, 'failed'), (5, 'unknown');

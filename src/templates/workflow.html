@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Nextflow workflows{% endblock %}
+{% block content %}
+
+    <div class="container">
+        <div class="py-5 text-center">
+            <h2>{{ wf.name }}</h2>
+            <p class="lead">{{ wf.info.title }}</p>
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-8 order-md-1">
+                <h4 class="mb-3">Parameters</h4>
+                <form class="needs-validation" novalidate action="" method="post">
+                    <div class="row">
+                        {% for param in wf.parameters %}
+
+                            <div class="col-md-6 mb-3">
+                                <label for={{ param.name }}>{{ param.name }}</label>
+                                {{ form|attr(param.name)(class="form-control") }}
+                            </div>
+
+                        {% endfor %}
+                    </div>
+
+                    <button class="btn btn-primary btn-lg" type="submit">Submit workflow</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

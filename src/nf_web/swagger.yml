@@ -1,0 +1,230 @@
+openapi: '3.0.2'
+info:
+  version: "1.0.0"
+  title: "CgPaaS-processing"
+  description: "Processing API"
+  termsOfService: ""
+  contact:
+    email: "genserv@sanger.ac.uk"
+  license:
+    name: ""
+    url: "http://sth.com"
+
+paths:
+
+  /components:
+    get:
+      summary: Get components info
+      operationId: cgpaas_processing.api.get_components
+      parameters:
+        - name: group_id
+          in: query
+          schema:
+            type: string
+        - name: info
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ComponentInfo'
+        '504':
+          $ref: '#/components/responses/ErrorInfo'
+
+  /components/{component_id}:
+    get:
+      summary: Get component
+      operationId: cgpaas_processing.api.get_component
+      parameters:
+        - name: component_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Component'
+        '404':
+          description: Not found
+        '504':
+          $ref: '#/components/responses/ErrorInfo'
+
+  /components/{component_id}/groups:
+    post:
+      summary: Assign component to group
+      operationId: cgpaas_processing.api.post_component_group
+      parameters:
+        - name: component_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: dry
+          in: query
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - group_id
+              properties:
+                group_id:
+                  type: string
+                params:
+                  type: object
+                  nullable: true
+                  additionalProperties:
+                    anyOf:
+                      - type: string
+                      - type: number
+                      - type: boolean
+                      - type: integer
+                    nullable: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobInfo'
+        '404':
+          description: Not found
+        '400':
+          $ref: '#/components/responses/ErrorInfo'
+        '504':
+          $ref: '#/components/responses/ErrorInfo'
+
+  /jobs:
+    get:
+      summary: Get job info
+      operationId: cgpaas_processing.api.get_jobs
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobInfo'
+        '400':
+          $ref: '#/components/responses/ErrorInfo'
+
+  /triggers/jobs/check:
+    put:
+      summary: Check submitted jobs
+      operationId: cgpaas_processing.api.put_triggers_jobs_check
+      parameters:
+        - name: timeout
+          in: query
+          schema:
+            type: integer
+        - name: batch_size
+          in: query
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: Accepted
+
+components:
+
+  schemas:
+
+    Component:
+      allOf:
+        - $ref: '#/components/schemas/ComponentInfo'
+        - type: object
+          properties:
+            parameters:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserParameter'
+
+    ComponentInfo:
+      required:
+        - id
+        - name
+        - version
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        info:
+          type: object
+          nullable: true
+
+    UserParameter:
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        default:
+          # TODO: add arrays?
+          anyOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: integer
+          nullable: true
+        range:
+          # TODO...
+          type: array
+          nullable: true
+
+    JobInfo:
+      # TODO: add submission reference?
+      required:
+        - id
+        - status
+      properties:
+        id:
+          type: string
+        job_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+
+    Error:
+      type: object
+      additionalProperties: true
+      properties:
+        message:
+          type: string
+
+  responses:
+
+    ErrorInfo:
+      description: Error information
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

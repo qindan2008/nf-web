@@ -1,0 +1,58 @@
+---
+name: nfBasic
+version: '1.0'
+info:
+  title: This pipeline allows you to print "Hello"
+input:
+  groups:
+    - type: dummy
+output: []
+parameters:
+  fasta_file:
+    type: string
+job:
+  format: nf
+  version: 1.0.0
+  configuration:
+    requirements:
+      cpus: 4
+      memory: 16G
+    templates:
+      - name: pipeline
+        format: string
+        contents: hello
+#          #!/usr/bin/env nextflow
+#
+#          params.in = "foobar"
+#
+#          process print_sleep {
+#          input:
+#          val foo from params.in
+#
+#          output:
+#          stdout into result
+#
+#          shell:
+#              '''
+#              bar=bar
+#              echo !{foo} $bar && sleep 1
+#              '''
+#          }
+#
+#          result.subscribe { println it }
+
+      - name: workflow
+        format: string
+        contents: hello
+      - name: wf_params
+        format: json
+        contents: |
+          {
+            "fasta_file": "{{params.fasta_file}}"
+          }
+      - name: file_inputs
+        format: json
+        contents: |
+          {
+          "print.nf": "{{rendered_templates['pipeline']}}"
+          }

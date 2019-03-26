@@ -1,0 +1,129 @@
+version: '3.4'
+
+services:
+
+  postgres:
+    image: postgres:10.3
+    volumes:
+      - ./postgres.sh:/docker-entrypoint-initdb.d/postgres.sh
+    ports:
+      - 127.0.0.1:9990:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    networks:
+      - test_network
+
+  processing:
+    image: "${DOCKER_REGISTRY}/cgpaas-processing/${PROCESSING_BRANCH_NAME-master}:${PROCESSING_IMAGE_TAG-latest}"
+    ports:
+      - 127.0.0.1:9992:8000
+    depends_on:
+      - postgres
+    environment:
+      - ODDJOB_URL=oddjob:8000
+      - FLOWS_URL=flows:8000
+      - SCHEMA_NAME=processing
+      - POSTGRES_HOST=postgres
+      - POSTGRES_GENSERV_USER=test_processing_service
+      - POSTGRES_GENSERV_PASSWORD=myfirstprocessingpassword
+      - SQLALCHEMY_TRACK_MODIFICATIONS=0
+      - SQLALCHEMY_ECHO=0
+    networks:
+      - test_network
+    command: ["bash", "-c", "SQLALCHEMY_DATABASE_URI=postgresql://$${POSTGRES_GENSERV_USER}:$${POSTGRES_GENSERV_PASSWORD}@$${POSTGRES_HOST}:5432/$${SCHEMA_NAME} uwsgi --master --http-socket 0.0.0.0:8000 --lazy-apps --processes 1 --enable-threads --module run:app"]
+
+  flows:
+    image: "${DOCKER_REGISTRY}/cgpaas-flows/${FLOWS_BRANCH_NAME-master}:${FLOWS_IMAGE_TAG-latest}"
+    ports:
+      - 127.0.0.1:9991:8000
+    depends_on:
+      - postgres
+    environment:
+      - SCHEMA_NAME=flows
+      - POSTGRES_HOST=postgres
+      - POSTGRES_GENSERV_USER=test_flows_service
+      - POSTGRES_GENSERV_PASSWORD=myfirstflowspassword
+      - SQLALCHEMY_TRACK_MODIFICATIONS=0
+      - SQLALCHEMY_ECHO=0
+    networks:
+      - test_network
+    command: ["bash", "-c", "SQLALCHEMY_DATABASE_URI=postgresql://$${POSTGRES_GENSERV_USER}:$${POSTGRES_GENSERV_PASSWORD}@$${POSTGRES_HOST}:5432/$${SCHEMA_NAME} uwsgi --master --http-socket 0.0.0.0:8000 --lazy-apps --processes 1 --enable-threads --module run:app"]
+
+  oddjob:
+    image: "${DOCKER_REGISTRY}/cgpaas-oddjob/${ODDJOB_BRANCH_NAME-test-nf-jobs}:${ODDJOB_IMAGE_TAG-latest}"
+    volumes:
+      - ./services/oddjob_db.ini:/opt/cgpaas/db_tool_config.ini
+    ports:
+      - 127.0.0.1:9999:8000
+      - 127.0.0.1:9997:9997
+      - 127.0.0.1:9996:9997
+      - 127.0.0.1:9995:9997
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_ODDJOB_USER=test_oddjob_service
+      - POSTGRES_ODDJOB_PASSWORD=myfirstoddjobpassword
+      - SQLALCHEMY_RECORD_QUERIES=0
+      - SQLALCHEMY_TRACK_MODIFICATIONS=0
+      - SQLALCHEMY_ECHO=0
+      - PLUGIN_ENVIRON_PATH=/tmp/oddjob/runners
+      - SWAGGER_SCHEMA=/opt/cgpaas/cgpaasOddjob/oddjob_rest/runners/plugins/nextflow/swagger.yml
+    networks:
+      - test_network
+    command: ["bash", "-c", "while [ 1 ]; do SQLALCHEMY_DATABASE_URI=postgresql://$${POSTGRES_ODDJOB_USER}:$${POSTGRES_ODDJOB_PASSWORD}@$$POSTGRES_HOST:5432/oddjob uwsgi --master --http-socket 0.0.0.0:8000 --need-app --processes 1 --enable-threads -w cgpaasOddjob.oddjob_rest.rest_app:app ; done"]
+
+  nextflow:
+    image: quay.io/cellgeni/nf-server:latest
+    ports:
+    - 127.0.0.1:9994:8000
+    environment:
+    - AUTH_TOKEN=test-authtoken
+    - CELERY_BROKER_URL=redis://redis:6379/0
+    - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    - WORKFLOW_PATH=/workflows
+    depends_on:
+    - redis
+    volumes:
+    - wf-volume:/workflows
+    networks:
+    - test_network
+
+  redis:
+    image: redis
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -h $$(hostname) ping"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+    - test_network
+
+  worker:
+    image: quay.io/cellgeni/nf-server:latest
+    environment:
+    - CELERY_BROKER_URL=redis://redis:6379/0
+    - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    - WORKFLOW_PATH=/workflows
+    volumes:
+    - wf-volume:/workflows
+    depends_on:
+    - redis
+    command: ["celery", "-A", "nf_server.celery_app:celery_app", "worker", "-l", "info"]
+    networks:
+    - test_network
+volumes:
+     wf-volume:
+
+networks:
+
+  # Manually add a network that doesn't clash with the network gitlab.internal.sanger.ac.uk is on
+  test_network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.18.18.0/24
