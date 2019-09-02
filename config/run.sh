@@ -28,7 +28,7 @@ mkdir -p $RESULTS_DIR
 
 TEST_DIR=tests
 export PYTHONPATH=$PWD
-python3 -m tests.prepopulate.py
+python3 -m tests.prepopulate
 #pytest $TEST_DIR/test_processing.py::test_run_pipeline --junitxml=${RESULTS_DIR}junit.xml $@
 rc=$?
 popd

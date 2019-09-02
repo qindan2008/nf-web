@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nf-web
+  labels:
+    app: nf-web
+spec:
+  type: NodePort
+  ports:
+  - port: 8000
+    targetPort: nf-web
+  selector:
+    app: nf-web
+

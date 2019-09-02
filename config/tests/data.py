@@ -19,5 +19,9 @@ COMPONENTS = {
     'nf-basic': {
         'id': 1,
         'external_id': '0603b671-2186-41cd-b6ed-c686ae51d67b'
+    },
+    'rnaseq': {
+        'id': 2,
+        'external_id': '1231b671-2186-41cd-b6ed-c686ae51dsad'
     }
 }

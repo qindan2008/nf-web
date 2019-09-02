@@ -19,6 +19,7 @@ export FLOWS_DB_URL=postgresql://test_flows_service:myfirstflowspassword@${DEPLO
 # Fetch wr token and certificate
 export NF_AUTH_TOKEN=test-authtoken
 export NF_SERVER_HOST=http://nextflow:8000
+#export NF_SERVER_HOST=http://nf-server.cellgeni.sanger.ac.uk
 #export TEST_DIR=tests
 #cd $TEST_DIR
 #export PYTHONPATH=$PYTHONPATH:$PWD

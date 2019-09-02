@@ -10,11 +10,11 @@ set -e
 
 if [ `docker-compose -p $DEPLOYMENT_NAME ps -q | wc -l` != "0" ]; then
   # If the deployment is running, destroy it
-  destroy_env.sh
+    $PWD/destroy_env.sh
 fi
 
 docker-compose pull processing flows
-docker-compose -p $DEPLOYMENT_NAME up -d
+docker-compose -p $DEPLOYMENT_NAME -f docker-compose.yml up -d
 docker ps
 
 ./services/flows.sh

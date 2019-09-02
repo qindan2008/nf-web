@@ -2,11 +2,14 @@ import os
 from typing import Dict
 
 from flask import Flask, redirect, url_for, render_template, request
-from wtforms import Form, StringField
+from werkzeug.utils import secure_filename
+from wtforms import Form, StringField, FileField
 
 from nf_web.client import ProcessingClient, OddJobClient
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
+
+app.config['UPLOAD_FOLDER'] = "/tmp"
 
 pr = ProcessingClient(os.getenv("PROCESSING_HOST"))
 oj = OddJobClient(os.getenv("ODDJOB_HOST"))
@@ -18,7 +21,10 @@ class WorkflowForm(Form):
     def get_form(cls, wf: Dict, formdata=None):
         setattr(cls, "wf", wf)
         for p in wf.get("parameters"):
-            setattr(cls, p['name'], StringField(p['name']))
+            if p['type'] == 'array':
+                setattr(cls, p['name'], FileField(p['name']))
+            else:
+                setattr(cls, p['name'], StringField(p['name']))
         return cls(formdata)
 
     def get_params(self) -> Dict:
@@ -63,6 +69,18 @@ def workflow(wf_id):
         return render_template(template, wf=wf, form=form)
     elif request.method == 'POST':
         form = WorkflowForm.get_form(wf, request.form)
+        # check if the post request has the file part
+        # if 'file' not in request.files:
+        #     flash('No file part')
+        #     return redirect(request.url)
+        file = request.files.get('file', '')
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect(url_for('uploaded_file',
+                                    filename=filename))
         pr.post_components_groups(component_id=wf_id, group_id="", params=form.get_params())
         oj.trigger_task_job_submit()
         return redirect(url_for("status"))

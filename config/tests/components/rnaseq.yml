@@ -1,0 +1,42 @@
+---
+name: RNASeq
+version: '1.0'
+info:
+  title: Fast RNAseq pipeline
+input:
+  groups:
+    - type: dummy
+output: []
+parameters:
+  samplefile:
+    type: array
+  genome:
+    type: string
+  profile:
+    type: string
+  studyid:
+    type: integer
+
+job:
+  format: nf
+  version: 1.0.0
+  configuration:
+    requirements:
+      cpus: 4
+      memory: 16G
+    templates:
+      - name: workflow
+        format: string
+        contents: cellgeni/rnaseq
+      - name: wf_params
+        format: json
+        contents: |
+          {
+            "in": "{{ params.fasta_file }}"
+          }
+      - name: file_inputs
+        format: json
+        contents: |
+          {
+          "samples.txt": "{{rendered_templates['pipeline']}}"
+          }

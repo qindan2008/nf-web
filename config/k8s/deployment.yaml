@@ -14,27 +14,29 @@ spec:
         app: nf-web
     spec:
       containers:
-      - image: quay.io/cellgeni/mprofile-web:v0.1.12
-        imagePullPolicy: IfNotPresent
+      - image: quay.io/cellgeni/nf-web:latest
+        imagePullPolicy: Always
         name: nf-web
         ports:
-        - containerPort: 8005
-          hostPort: 8005
+        - containerPort: 8000
+          hostPort: 18045
           name: nf-web
         resources:
           requests:
-            memory: "512Mi"
-            cpu: 1
+            memory: "128Mi"
+            cpu: 100m
           limits:
-            memory: "2Gi"
-            cpu: 2
+            memory: "1Gi"
+            cpu: 1
         env:
-          - name: MODEL_HOST
-            value: http://predictor.default.svc.cluster.local
-        livenessProbe:
-          httpGet:
-            path: /nf-web
-            port: nf-web
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-          periodSeconds: 240
+          - name: PROCESSING_HOST
+            value: http://nfweb-backend.cellgeni.sanger.ac.uk:9992
+          - name: ODDJOB_HOST
+            value: http://nfweb-backend.cellgeni.sanger.ac.uk:9999
+#        livenessProbe:
+#          httpGet:
+#            path: /nf-web
+#            port: nf-web
+#          initialDelaySeconds: 10
+#          timeoutSeconds: 5
+#          periodSeconds: 240
