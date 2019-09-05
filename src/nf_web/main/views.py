@@ -1,18 +1,18 @@
 import os
 from typing import Dict
 
-from flask import Flask, redirect, url_for, render_template, request
+from flask import redirect, url_for, render_template, request, Blueprint, current_app as app
+from flask_user import login_required, current_user
 from werkzeug.utils import secure_filename
 from wtforms import Form, StringField, FileField
 
 from nf_web.client import ProcessingClient, OddJobClient
-
-app = Flask(__name__, template_folder="../templates", static_folder="../static")
-
-app.config['UPLOAD_FOLDER'] = "/tmp"
+from nf_web.users.models import Job, User
+from nf_web.app import db
 
 pr = ProcessingClient(os.getenv("PROCESSING_HOST"))
 oj = OddJobClient(os.getenv("ODDJOB_HOST"))
+main_blueprint = Blueprint('main', __name__)
 
 
 class WorkflowForm(Form):
@@ -35,12 +35,13 @@ class WorkflowForm(Form):
         return params
 
 
-@app.route('/')
+@main_blueprint.route('/')
 def hello():
-    return redirect(url_for('status'))
+    return redirect(url_for('main.status'))
 
 
-@app.route('/status/')
+@main_blueprint.route('/status/')
+@login_required
 def status():
     template = "status.html"
     oj.trigger_task_job_check()
@@ -50,17 +51,21 @@ def status():
     for status, wf in zip(statuses, workflows):
         wf['status'] = status['status']
     print(workflows)
-    return render_template(template, workflows=workflows)
+    return render_template(template, workflows=workflows, user=current_user)
 
 
-@app.route('/workflows/')
+@main_blueprint.route('/workflows/')
+@login_required
 def workflows():
     template = "workflows.html"
     workflows = pr.get_components()
-    return render_template(template, workflows=workflows)
+    user = User.get_by_name(current_user)
+    user_jobs = user.get_jobs()
+    return render_template(template, workflows=workflows, user=current_user)
 
 
-@app.route('/workflow/<wf_id>/', methods=["GET", "POST"])
+@main_blueprint.route('/workflow/<wf_id>/', methods=["GET", "POST"])
+@login_required
 def workflow(wf_id):
     template = "workflow.html"
     wf = pr.get_component(wf_id)
@@ -81,10 +86,9 @@ def workflow(wf_id):
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return redirect(url_for('uploaded_file',
                                     filename=filename))
-        pr.post_components_groups(component_id=wf_id, group_id="", params=form.get_params())
+        job_id = pr.post_components_groups(component_id=wf_id, group_id="", params=form.get_params())
+        job = Job(id=int(job_id), user_id=User.get_by_name(current_user))
+        db.session.add(job)
+        db.session.commit()
         oj.trigger_task_job_submit()
-        return redirect(url_for("status"))
-
-
-if __name__ == '__main__':
-    app.run()
+        return redirect(url_for("main.status"))
