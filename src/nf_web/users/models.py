@@ -1,3 +1,4 @@
+import datetime
 from typing import List
 
 from flask_user import UserMixin
@@ -19,7 +20,7 @@ class User(db.Model, UserMixin):
     # Relationships
     roles = db.relationship('Role', secondary='users_roles',
                             backref=db.backref('users', lazy='dynamic'))
-    jobs = db.relationship("Job")
+    # jobs = db.relationship("Job", back_populates="jobs")
 
     @classmethod
     def get_by_name(cls, name):
@@ -27,6 +28,17 @@ class User(db.Model, UserMixin):
 
     def get_jobs(self) -> List[int]:
         return [job.id for job in self.jobs]
+
+    @classmethod
+    def create_user(cls, app, db, email, password, role=None):
+        user = cls(email=email,
+                    password=app.user_manager.password_manager.hash_password(password),
+                    active=True,
+                    email_confirmed_at=datetime.datetime.utcnow())
+        if role:
+            user.roles.append(role)
+        db.session.add(user)
+        return user
 
 
 class Role(db.Model):
@@ -45,4 +57,7 @@ class UsersRoles(db.Model):
 class Job(db.Model):
     __tablename__ = 'jobs'
     id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.String)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime())
+

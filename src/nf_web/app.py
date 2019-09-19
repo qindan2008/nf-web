@@ -16,7 +16,7 @@ migrate = Migrate()
 
 
 # Initialize Flask Application
-def create_app():
+def create_app(extra_config_settings=None):
     """Create a Flask application.
     """
     # Instantiate Flask
@@ -26,6 +26,8 @@ def create_app():
     app.config.from_object('nf_web.settings')
     # Load environment specific settings
     # app.config.from_object('app.local_settings')
+    if extra_config_settings:
+        app.config.update(extra_config_settings)
 
     # Setup Flask-SQLAlchemy
     db.init_app(app)
